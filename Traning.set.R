@@ -8,7 +8,7 @@ GenePop <- GenePopData
 
 prop.keep = 0.5
 
-training.bra <- function(GenePop, prop.keep){
+training.bra <- function(GenePop, prop.keep, out.name){
   
 ## GenePop = the genepop file with all loci 
 ## subs = the loci names of interest
@@ -149,10 +149,11 @@ training.bra <- function(GenePop, prop.keep){
     working.out <- temp2[working.brah.vector,]
     training.out <- temp2[training.brah.vector,]
     
-
     drop.last.working <- ncol(working.out)
     drop.last.training <- ncol(training.out)
     
+    
+
 #Now recompile the GenePop format
     
     #the number of individuals for all popualtions but the last (Pop tagged to the end)
@@ -183,8 +184,8 @@ training.bra <- function(GenePop, prop.keep){
     }
     
 
-    #working.out <- working.out[,-ncol(working.out)]
-    #training.out <- training.out[,-ncol(training.out)]
+    working.out <- working.out[,-ncol(working.out)]
+    training.out <- training.out[,-ncol(training.out)]
     
    
     
@@ -206,7 +207,7 @@ training.bra <- function(GenePop, prop.keep){
     #Insert the value of "Pop" which partitions the data among populations
     Loci.training <- insert.vals(Vec=Loci.training, breaks = PopPosition.training, newVal = "Pop")
     Loci.working <- insert.vals(Vec=Loci.working,breaks=PopLengths.working,newVal="Pop")
-
+    
     #Add the first "Pop" label
     Loci.training <- c("Pop",Loci.training) 
     Loci.working <- c("Pop", Loci.working)
@@ -214,7 +215,7 @@ training.bra <- function(GenePop, prop.keep){
     
     ## Add the column labels and the stacks version
     
-    out.name <- deparse(substitute(GenePop))
+    #out.name <- deparse(substitute(GenePop))
     out.name.working <- paste(out.name, "working.txt", sep =".")
     out.name.training <- paste(out.name, "training.txt", sep =".")
     
@@ -230,4 +231,4 @@ training.bra <- function(GenePop, prop.keep){
     
 } #End function
 
-training.bra(GenePop = GenePopData, prop.keep = 0.5)
+training.bra(GenePop = GenePopData, prop.keep = 0.5, out.name = "Test")
