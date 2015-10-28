@@ -207,10 +207,6 @@ training.bra <- function(GenePop, prop.keep){
     Loci.training <- insert.vals(Vec=Loci.training, breaks = PopPosition.training, newVal = "Pop")
     Loci.working <- insert.vals(Vec=Loci.working,breaks=PopLengths.working,newVal="Pop")
 
-    #Insert the value of "Pop" which partitions the data among populations
-    Loci.training <- insert.vals(Vec=Loci.training, breaks = where.pop.training, newVal = "Pop")
-    Loci.working <- insert.vals(Vec=Loci.working,breaks=where.pop.working,newVal="Pop")
-
     #Add the first "Pop" label
     Loci.training <- c("Pop",Loci.training) 
     Loci.working <- c("Pop", Loci.working)
