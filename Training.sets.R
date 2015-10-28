@@ -149,26 +149,19 @@ training.bra <- function(GenePop, prop.keep){
     working.out <- temp2[working.brah.vector,]
     training.out <- temp2[training.brah.vector,]
     
-<<<<<<< HEAD
+
     drop.last.working <- ncol(working.out)
     drop.last.training <- ncol(training.out)
     
-=======
->>>>>>> origin/master
-    
-
 #Now recompile the GenePop format
     
     #the number of individuals for all popualtions but the last (Pop tagged to the end)
     PopLengths.working <- table(working.out$Pop)
     PopLengths.training <- table(training.out$Pop)
     
-<<<<<<< HEAD
    # working.out <- working.out[,-drop.last.working]
   #  training.out <- training.out[,-drop.last.training]
     
-=======
->>>>>>> origin/master
     if(length(table(working.out$Pop))==2){PopPosition.working = PopLengths.working+1}
     
     if(length(table(working.out$Pop))>2){ 
@@ -207,21 +200,17 @@ training.bra <- function(GenePop, prop.keep){
     Loci.working <- paste(PopVec.working,Loci.working,sep="")
     Loci.training <- paste(PopVec.training,Loci.training,sep="")
     
-<<<<<<< HEAD
     where.pops.training <- data.frame(PopLengths.training)[,2]
     where.pops.working <- data.frame(PopLengths.working)[,2]
       
     #Insert the value of "Pop" which partitions the data among populations
     Loci.training <- insert.vals(Vec=Loci.training, breaks = PopPosition.training, newVal = "Pop")
     Loci.working <- insert.vals(Vec=Loci.working,breaks=PopLengths.working,newVal="Pop")
-=======
-  
-    
+
     #Insert the value of "Pop" which partitions the data among populations
     Loci.training <- insert.vals(Vec=Loci.training, breaks = where.pop.training, newVal = "Pop")
     Loci.working <- insert.vals(Vec=Loci.working,breaks=where.pop.working,newVal="Pop")
->>>>>>> origin/master
-    
+
     #Add the first "Pop" label
     Loci.training <- c("Pop",Loci.training) 
     Loci.working <- c("Pop", Loci.working)
