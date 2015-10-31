@@ -53,7 +53,8 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL){
     snpData <- GenePop[Pops[1]:NROW(GenePop),]
 
 #Get a datafile with just the snp data no pops
-    tempPops <- which(snpData$data=="Pop")
+tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "POP") ## Changed because we allowed
+## alternate spelling on line 48, so had to change this so it would identify properly and not make an empty DF
     snpData <- snpData[-tempPops,]
 
 #Seperate the snpdata
