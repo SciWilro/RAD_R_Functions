@@ -26,18 +26,25 @@ rm(list=ls())
 
 rm(list=ls())
 rm(list=ls())
-GenePopData <- read.table("SC_Pops_East_West.txt", header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE)
+GenePopData <- read.table("t.sub2.txt", header = FALSE, sep = "\t", qu ote = "", stringsAsFactors = FALSE)
+
+
+
+ GenePopData <- read.table("SC_Pops_East_West.txt", header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE)
  
- GenePop <- GenePopData
+GenePopData <- read.table("SC_Pops_Wild_Farmed.txt", header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE)
+GenePop <- GenePopData
 Nmothers = 20
 Nfathers = 20
-out.name <- "SC_Pops_F_Yeah"
-pop.groups <- c("Aqu", "WDE", "WDW")
+out.name <- "Farm_Wild"
+pop.groups <- c("FRM", "WLD")
+family.size <- 50
 
 #do.sex <- function(genotype, Nmothers, Nfathers, Noff, pop, F1, F2 = No, BC = Yes){
 
 
- # do.sex <- function(genotype, Nmothers, Nfathers, out.name, pop.groups=NULL){ 
+ # do.sex <- function(genotype, Nmothers, Nfathers, out.name, family.size, pop.groups=NULL){ 
+
     #Check to make sure the packages required are there
  # packages <- c("dplyr", "tidyr", "stringr", "plyr") ## which packages do we need?
 #  if (length(setdiff(packages, rownames(installed.packages()))) > 0) { ### checks that the required packages are among those 
@@ -142,7 +149,7 @@ for(i in 1:length(ColumnData)){ ### for loop to add original, then duplicated na
     #rm(hold,pophold,tPops,PopIDs) ### make a vector to denote the populations
 
     if(length(pop.groups)!=0){
-     hold.names=str_extract(NamePops, "[A-z]{3}" )
+     hold.names=str_extract(NamePops, "[A-z]{3}" ) ## This may need to be improved in published version
         for(i in 1:length(unique(PopIDs))){
           u.ID.no <- unique(PopIDs)[i]
           to <- min(which(PopIDs==u.ID.no))
@@ -152,9 +159,6 @@ for(i in 1:length(ColumnData)){ ### for loop to add original, then duplicated na
     NameExtract <- hold.names
     }
     
-  
-    
- 
     #temp2$Pop ## can be used as internal check of code
     
     ## get the nubmer of indivudals within each "Pop" grouping
@@ -244,8 +248,7 @@ for(i in 1:length(ColumnData)){ ### for loop to add original, then duplicated na
     } # END of loop creating random mating groups
 
 
-    
-    
+## Do the Pure Crosses    
 #uPop.names = unique(NameExtract) ## get the number unique IDs (or pop.groups where given by user)
 get.cross.names = NULL
 allele.hold <- NULL
@@ -271,28 +274,29 @@ for(i in 1:max(Nfamilies$Family)){ ## get families within population
   
   off.name.hold = paste(rownames(family.make[get.mom.who.bangs,]), rownames(family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),]), i, sep = ".") ## this will hold the name of the mother and father so that can check offspring assignment against
   ## Can replace 50 with number of offsrping later
-  off.gens.hold = data.frame(matrix(vector(), 50, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
+  off.gens.hold = data.frame(matrix(vector(), family.size, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
                                                             ### rows as there are simulated offpsring 
                                                               ### because it this data frame is specified here, it will thus blank it each time the loop goes through parent pairs
-  
-    mom.matrix <- data.frame(matrix(vector(), length(mom.who.bangs)/2, 2))
-mom.matrix$X1 = t(mom.who.bangs[c(T,F)])
-mom.matrix$X2 = t(mom.who.bangs[c(F,T)])
+## will make dataframe that is 2 columns (one for each allele) by number of loci rows for mother and father  
+mom.matrix <- data.frame(matrix(vector(), length(mom.who.bangs)/2, 2)) ## blank matrix of correct size
+mom.matrix$X1 = t(mom.who.bangs[c(T,F)]) ## column of matrix is first allele
+mom.matrix$X2 = t(mom.who.bangs[c(F,T)]) ## secomnd column is second allele
 
-
+## Repeat for father
 dad.matrix <- data.frame(matrix(vector(), length(dad.who.bangs)/2, 2))
 dad.matrix$X1 <- t(dad.who.bangs[c(T,F)])
 dad.matrix$X2 <- t(dad.who.bangs[c(T,F)])
-    for(j in 1:50){ ### for each parent pair, want to make a number of simulated offpsring. 
+## get 50 offpsring for each parent pair - can change number later if desire
+    for(j in 1:family.size){ ### for each parent pair, want to make a number of simulated offpsring. 
     
-dad.out <- apply(t(dad.matrix), 2, sample, 1)
-mom.out <- apply(t(mom.matrix), 2, sample, 1)
+dad.out <- apply(t(dad.matrix), 2, sample, 1) ## transpose the matrix, then choose one row at random from each column - simulates meiosis with no linkage
+mom.out <- apply(t(mom.matrix), 2, sample, 1) ## repeat for father
       
       off.name = paste(off.name.hold, j, sep = "_") ## generates an individual offspring name composed of its parents names (off.name.hold), and the number of the offspring
       #allele.hold = data.frame(allele.hold) ### the allele.hold object needs to be coerced into a data frame format to work with it optimally
       colnames(allele.hold) = NULL ## remove the column names - makes it simpler to work with
     
-    allele.hold<- data.frame(c(rbind(mom.out, dad.out)))
+    allele.hold<- data.frame(c(rbind(mom.out, dad.out))) ### binds alternating 
     off.gens.hold[j,2:length(off.gens.hold)] = t(allele.hold) ## there was an issue with trying to just add the offspring name to the front of the allele.hold object, then adding
                                                               ### this to the off.gens.hold data frame - for some reason, it would only add the level of the 'factor' R was
                                                                 ## interpreting the name as - so this starts the genotypes at the second position where they should be, and keeps
@@ -303,7 +307,7 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
  
       #print(paste0("J progress = ", ((j/50)*100)))  
       } # J Closure
-    gen.dat.file = paste("Pure", off.name.hold,  sep = "_") ## makes an object name consisting of genotypes + the two parent names
+    gen.dat.file = paste("Pure", off.name.hold,  sep = ".") ## makes an object name consisting of genotypes + the two parent names
     assign(x = gen.dat.file, value = off.gens.hold, envir = globalenv()) ## assigns the object name to the generated simulated offspring genotypes, and then assigns it to the global env.
   get.cross.names = rbind(get.cross.names, gen.dat.file)
 } # I Closure
@@ -325,7 +329,8 @@ pop.fam.reps = length(get.cross.names)/how.many.pops
 ## LOOP that generatest he PURE CROSS RESULTS
 get.pure.names <- NULL
 for(l in 1:length(pop.groups)){ ## LOOP for the number of populations
-  get.string = paste0("Pure_", pop.groups[l]) ## make a string of the name common part of the lth family name
+  get.string = paste0("Pure.", pop.groups[l]) ## make a string of the name common part of the lth family name
+  out.string <- paste0("Pure_", pop.groups[l])
   to.get = which(str_detect(ls(), pattern = get.string) == TRUE) ## which of the names of everything in the global
     ## environment match the names of the lth family? - vector of numbers
   objects = ls() # make a vector of the names of everythign in the Globalenv
@@ -335,11 +340,11 @@ for(l in 1:length(pop.groups)){ ## LOOP for the number of populations
    geno.rbind = do.call(rbind, geno.unlist) ## rbind all dataframes into one
   
    ## ranomly sample 50 individuals amongst all 
-   pure.geno.out <- sample_n(tbl = geno.rbind, size = 50, replace = FALSE)
+   pure.geno.out <- sample_n(tbl = geno.rbind, size = family.size, replace = FALSE)
   ## assign the 50 indv to the global env - this is the OUTPUT/RESULTS
-  assign(x = get.string, value = pure.geno.out, envir = globalenv())
+  assign(x = out.string, value = pure.geno.out, envir = globalenv())
   as.character(get.string)
-  get.pure.names = c(get.pure.names, get.string) ## get list of naems of Pure Cross results to allow them to be sourced
+  get.pure.names = c(get.pure.names, out.string) ## get list of naems of Pure Cross results to allow them to be sourced
 } ### END PURE CROSS RESULTS LOOP 
 
 
@@ -371,12 +376,12 @@ F1.par.combs <- data.frame(do.call(rbind, str_split(F1.par.combs, "\\+"))) ## us
 
 
 
-if(nrow(F1.par.combs)<2){
-  F1.m.f.rev <- data.frame(F1.par.combs[,2], F1.par.combs[,1]) ## reverse the order of the PCs
-  names(F1.m.f.rev) <- names(F1.par.combs) ## give the reversed pops teh same name to allow rbind
- F1.par.combs <-  rbind(F1.par.combs, F1.m.f.rev) ## rbind orignal and reversed
+#if(nrow(F1.par.combs)<2){
+#  F1.m.f.rev <- data.frame(F1.par.combs[,2], F1.par.combs[,1]) ## reverse the order of the PCs
+#  names(F1.m.f.rev) <- names(F1.par.combs) ## give the reversed pops teh same name to allow rbind
+# F1.par.combs <-  rbind(F1.par.combs, F1.m.f.rev) ## rbind orignal and reversed
   
-}# END of if statement
+#}# END of if statement
 
 ## Randomly sample "parents" from the pure crosses to be used in the F1
 ## loop is essentially the same as the one used to get the parents for the PC
@@ -397,16 +402,16 @@ j=1 ## used for internal code checking
     father.pop.name.F1 <- str_extract(string = father.get.word.F1, pattern = "Pure_[A-z]{3}")
     mother.pop.name.F1 <- paste("F1par", mother.pop.name.F1, sep="_")
     
-    mother.pop.F1 <- get(mother.get.word.F1) 
+    mother.pop.F1 <- get(mother.get.word.F1) ## retrieve the population from the globalEnv
     father.pop.F1 <- get(father.get.word.F1)
     
-    mother.get.F1 <- sample_n(tbl = mother.pop.F1, size = Nmothers)
-    father.get.F1 <- sample_n(tbl = father.pop.F1, size = Nfathers)
+    mother.get.F1 <- sample_n(tbl = mother.pop.F1, size = Nmothers) ## randomly select Nmothers from the mothers populaiton
+    father.get.F1 <- sample_n(tbl = father.pop.F1, size = Nfathers) ## do the same for the fathers
     
     
-    family.hold.F1 <- rbind(mother.get.F1, father.get.F1)
+    family.hold.F1 <- rbind(mother.get.F1, father.get.F1) ## bind the mothers above the fathers
     
-    Fam.name.F1 <- paste(mother.pop.name.F1, father.pop.name.F1,  sep = ".")
+    Fam.name.F1 <- paste(mother.pop.name.F1, father.pop.name.F1,  sep = ".") ## add the names of the mother and father pops so can track the genetics
     
     assign(x = Fam.name.F1, value = family.hold.F1, envir = globalenv())
     F1.family.list <- c(F1.family.list, Fam.name.F1)
@@ -414,7 +419,7 @@ j=1 ## used for internal code checking
     }
  
 
- 
+## MAKE THE F1 - the process is the same as for the Pure Crosses 
  F1.get.cross.names <- NULL
  F1.prog <- txtProgressBar(min=0, max = length(F1.family.list), style = 3)
  print("F1 Cross Progress")
@@ -428,7 +433,7 @@ for(i in 1:max(Nfamilies$Family)){ ## get families within population
   get.mom.who.bangs <- Nfamilies$Moth[i]
   get.dad.who.bangs <- Nfamilies$Fath[i]
   
-  mom.who.bangs <- F1.family.make[get.mom.who.bangs,-1]
+  mom.who.bangs <- F1.family.make[get.mom.who.bangs,-1] ## have to remove the first column because it is in as the population not a genotype
   dad.who.bangs <- F1.family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),-1]
   
   #mom.who.bangs <- cbind(NA, mom.who.bangs)
@@ -436,7 +441,7 @@ for(i in 1:max(Nfamilies$Family)){ ## get families within population
   
   off.name.hold = paste(rownames(F1.family.make[get.mom.who.bangs,]), ".zF1z.", gsub(x = rownames(F1.family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),]), pattern = "Pure_", replacement = ""), i, sep = "X") ## this will hold the name of the mother and father so that can check offspring assignment against
   ## Can replace 50 with number of offsrping later
-  off.gens.hold = data.frame(matrix(vector(), 50, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
+  off.gens.hold = data.frame(matrix(vector(), family.size, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
                                                             ### rows as there are simulated offpsring 
                                                                 ### because it this data frame is specified here, it will thus blank it each time the loop goes through parent pairs
   
@@ -448,7 +453,7 @@ mom.matrix$X2 = t(mom.who.bangs[c(F,T)])
 dad.matrix <- data.frame(matrix(vector(), length(dad.who.bangs)/2, 2))
 dad.matrix$X1 <- t(dad.who.bangs[c(T,F)])
 dad.matrix$X2 <- t(dad.who.bangs[c(T,F)])
-    for(j in 1:50){ ### for each parent pair, want to make a number of simulated offpsring. 
+    for(j in 1:family.size){ ### for each parent pair, want to make a number of simulated offpsring. 
     
 dad.out <- apply(t(dad.matrix), 2, sample, 1)
 mom.out <- apply(t(mom.matrix), 2, sample, 1)
@@ -467,8 +472,8 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
       allele.hold = NULL ## nulls out the allele.hold object so it can be recycled back through the loop
  
       } # J Closure
-  gen.fam <- paste0("F1_fam_", h,  "_")
-  gen.dat.file <- gsub(x =  off.name.hold, pattern = "Pure_", replacement = gen.fam)
+  gen.fam <- paste0("A1_fam_", h,  "_")
+  gen.dat.file <- gsub(x =  off.name.hold, pattern = "Pure.", replacement = gen.fam)
     
     assign(x = gen.dat.file, value = off.gens.hold, envir = globalenv()) ## assigns the object name to the generated simulated offspring genotypes, and then assigns it to the global env.
   F1.get.cross.names = rbind(F1.get.cross.names, gen.dat.file)
@@ -478,28 +483,32 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
 } # H Closure
  
 
- length(gen.dat.file[1])
+# length(gen.dat.file[1]) ### used for internal error checking
  
  
  
- l=1
+l=1 ## used for internal error checking
  get.F1.names = NULL
 for(l in 1:length(F1.family.list)){
-  get.string.F1 = paste0("F1_fam_", l,  "_")
-  to.get.F1 = which(str_detect(ls(), pattern = get.string.F1) == TRUE)
-  objects.F1 = ls()
-  geno.list.F1 = list(mget(objects.F1[c(min(to.get.F1):max(to.get.F1))]))
+  get.string.F1 = paste0("A1_fam_", l,  "_") ## Cerate a string to search for based on the known beginning of the F1 cross generating function
+  to.get.F1 = which(str_detect(ls(), pattern = get.string.F1) == TRUE) ## make a vector of numbers which are the positions in the globalEnv where
+                                                                        ## the dataframes which match the string are
+  objects.F1 = ls() ## make a vector that is the names in the globalEmv
+  geno.list.F1 = list(mget(objects.F1[c(min(to.get.F1):max(to.get.F1))])) ## get all those datafreames from the globalEnv that are in the positioins 
    geno.unlist.F1 = unlist(geno.list.F1, recursive = FALSE)
    geno.rbind.F1 = do.call(rbind, geno.unlist.F1)
   
-   geno.out.F1 <- sample_n(tbl = geno.rbind.F1, size = 50, replace = FALSE)
+   geno.out.F1 <- sample_n(tbl = geno.rbind.F1, size = family.size, replace = FALSE)
   
+   ## remove the extraneous from the name vector
    nam.geno.hold <- names(geno.list.F1[[1]])[1]
-  nam.geno.hold <- str_split(string = nam.geno.hold, pattern = get.string.F1)[[1]][2]
+  #nam.geno.hold <- str_split(string = nam.geno.hold, pattern = get.string.F1)[[1]][2]
   nam.geno.hold<- gsub(pattern = "[0-9]", replacement = "", x = nam.geno.hold)
   nam.geno.hold<- gsub(pattern = "X", replacement = "", x = nam.geno.hold)
   nam.geno.hold <- gsub(pattern = "\\.{2,}", replacement = ".", nam.geno.hold)
-  nam.geno.hold <- paste("F1", nam.geno.hold, sep="_")
+  nam.geno.hold <- gsub(pattern = "fam__", replacement = "", nam.geno.hold)
+  nam.geno.hold <- gsub(pattern = "\\.A_", replacement = ".", nam.geno.hold)
+  nam.geno.hold <- gsub(pattern = "A_", replacement = "F1_", nam.geno.hold)
   
   assign(x = nam.geno.hold, value = geno.out.F1, envir = globalenv())
   get.F1.names = c(get.F1.names, nam.geno.hold)
@@ -509,10 +518,14 @@ for(l in 1:length(F1.family.list)){
  
  #rm(F1.get.cross.names)
 
-F2.par.combs <- combn(get.F1.names, 2, paste, collapse = '+')
+F2.par.combs <- combn(get.F1.names, 2, paste, collapse = '+') ### get all combinations of the families created in teh F1
 F2.par.combs <- data.frame(do.call(rbind, str_split(F2.par.combs, "\\+"))) 
 
+if(length(get.F1.names)==1){
+  F2.par.combs <- data.frame(cbind(get.F1.names, get.F1.names))
+}
 
+q=1 ## used for internal code checking
 F2.family.list <- NULL
 
 for(q in 1:nrow(F2.par.combs)){  
@@ -536,7 +549,7 @@ for(q in 1:nrow(F2.par.combs)){
     
     family.hold.F2 <- rbind(mother.get.F2, father.get.F2)
     
-    Fam.name.F2 <- paste("F2_", mother.pop.name.F2, "x", father.pop.name.F2,  sep = "")
+    Fam.name.F2 <- paste("F2.", mother.pop.name.F2, "x.", father.pop.name.F2,  sep = "")
     
     assign(x = Fam.name.F2, value = family.hold.F2, envir = globalenv())
     F2.family.list <- rbind(F2.family.list, Fam.name.F2)
@@ -566,9 +579,9 @@ for(i in 1:max(Nfamilies$Family)){ ## get families within population
   #mom.who.bangs <- cbind(NA, mom.who.bangs)
   #dad.who.bangs <- cbind(NA, dad.who.bangs)
   
-  off.name.hold = paste(rownames(F2.family.make[get.mom.who.bangs,]), ".zF2z.", gsub(x = rownames(F2.family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),]), pattern = "F1_", replacement = ""), i, sep = "X")
+  off.name.hold = paste(rownames(F2.family.make[get.mom.who.bangs,]), ".bF2b.", gsub(x = rownames(F2.family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),]), pattern = "F1.", replacement = ""), i, sep = "X")
   ## Can replace 50 with number of offsrping later
-  off.gens.hold = data.frame(matrix(vector(), 50, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
+  off.gens.hold = data.frame(matrix(vector(), family.size, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
                                                              ### because it this data frame is specified here, it will thus blank it each time the loop goes through parent pairs
   
     mom.matrix <- data.frame(matrix(vector(), length(mom.who.bangs)/2, 2))
@@ -579,7 +592,7 @@ mom.matrix$X2 = t(mom.who.bangs[c(F,T)])
 dad.matrix <- data.frame(matrix(vector(), length(dad.who.bangs)/2, 2))
 dad.matrix$X1 <- t(dad.who.bangs[c(T,F)])
 dad.matrix$X2 <- t(dad.who.bangs[c(T,F)])
-    for(j in 1:50){ ### for each parent pair, want to make a number of simulated offpsring. 
+    for(j in 1:family.size){ ### for each parent pair, want to make a number of simulated offpsring. 
     
 dad.out <- apply(t(dad.matrix), 2, sample, 1)
 mom.out <- apply(t(mom.matrix), 2, sample, 1)
@@ -598,8 +611,8 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
       allele.hold = NULL ## nulls out the allele.hold object so it can be recycled back through the loop
  
       } # J Closure
-    gen.fam <- paste0("F2_fam_", h,  "_")
-  gen.dat.file <- gsub(x =  off.name.hold, pattern = "F1_", replacement = gen.fam)
+    gen.fam <- paste0("B2_fam_", h,  "_")
+  gen.dat.file <- gsub(x =  off.name.hold, pattern = "A1_", replacement = gen.fam)
    
  
     assign(x = gen.dat.file, value = off.gens.hold, envir = globalenv()) ## assigns the object name to the generated simulated offspring genotypes, and then assigns it to the global env.
@@ -610,12 +623,13 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
 } # H Closure
  
  
- #### WORKS TO HERE
  
-l=1
+ 
+l=1 ## used for internal error checking
+ ## loop is essentially the same as the the one for the F1 families - just modified to fit the name structure of the F2
  get.F2.names = NULL
 for(l in 1:length(F2.family.list)){
-  get.string.F2 = paste0("F2_fam_", l, "_", "fam_[0-9]{1,}_")
+  get.string.F2 = paste0("B2_fam_", l, "_", "fam_[0-9]{1,}_")
   to.get.F2 = which(str_detect(ls(), pattern = get.string.F2) == TRUE)
   objects.F2 = ls()
   geno.list.F2 = list(mget(objects.F2[c(min(to.get.F2):max(to.get.F2))]))
@@ -623,14 +637,16 @@ for(l in 1:length(F2.family.list)){
    geno.rbind.F2 = do.call(rbind, geno.unlist.F2)
   
    
-   geno.out.F2 <- sample_n(tbl = geno.rbind.F2, size = 50, replace = FALSE)
+   geno.out.F2 <- sample_n(tbl = geno.rbind.F2, size = family.size, replace = FALSE)
    
    nam.geno.hold <- names(geno.list.F2[[1]])[1]
-  nam.geno.hold <- str_split(string = nam.geno.hold, pattern = get.string.F2)[[1]][2]
+  #nam.geno.hold <- str_split(string = nam.geno.hold, pattern = get.string.F2)[[1]][2]
   nam.geno.hold<- gsub(pattern = "[0-9]", replacement = "", x = nam.geno.hold)
   nam.geno.hold<- gsub(pattern = "X", replacement = "", x = nam.geno.hold)
+  nam.geno.hold<- gsub(pattern = "fam", replacement = "", x = nam.geno.hold)
   nam.geno.hold <- gsub(pattern = "\\_{,}", replacement = ".", nam.geno.hold)
   nam.geno.hold <- gsub(pattern = "\\.{2,}", replacement = ".", nam.geno.hold)
+  nam.geno.hold <- gsub(pattern = "B.", replacement = "", nam.geno.hold)
   nam.geno.hold <- paste("F2", nam.geno.hold, sep="_")
 
   assign(x = nam.geno.hold, value = geno.out.F2, envir = globalenv())
@@ -643,9 +659,14 @@ for(l in 1:length(F2.family.list)){
 BC.par.combs <- combn(BC.names.list, 2, paste, collapse = '+')
 BC.par.combs <- data.frame(do.call(rbind, str_split(BC.par.combs, "\\+"))) 
 
+## when creating all combinations, also creates one which are actually pure crosses and F2 crosses - remove them
 
-BC.par.combs <- BC.par.combs[-which(str_detect(string = BC.par.combs$X1, pattern = "F1_")==TRUE),]
+if(any(str_detect(string = BC.par.combs$X1, pattern = "F1_")==TRUE)){
+BC.par.combs <- BC.par.combs[-which(str_detect(string = BC.par.combs$X1, pattern = "F1_")==TRUE),] ## This causes it to fail when there are none to remove - why?????
+}
+if(any(str_detect(string = BC.par.combs$X2, pattern = "Pure_")==TRUE)){
 BC.par.combs <- BC.par.combs[-which(str_locate(string = BC.par.combs$X2, pattern = "Pure_")==TRUE),]
+}
 
 BC.par.combs <- droplevels(BC.par.combs)
 
@@ -657,7 +678,7 @@ for(q in 1:nrow(BC.par.combs)){
     mother.get.word.BC <- as.character(BC.par.combs[q,1])
     father.get.word.BC <- as.character(BC.par.combs[q,2])
     
-    mother.pop.name.BC <- unlist(str_split(string = mother.get.word.BC, pattern = "Pure_"))[2]
+    mother.pop.name.BC <- unlist(str_split(string = mother.get.word.BC, pattern = "Pure_"))[2] ## 
     father.pop.name.BC <-  unlist(str_split(string = father.get.word.BC, pattern = "F1_"))[2]
     
     mother.pop.BC <- get(mother.get.word.BC) 
@@ -699,9 +720,9 @@ for(i in 1:max(Nfamilies$Family)){ ## get families within population
   #mom.who.bangs <- cbind(NA, mom.who.bangs)
   #dad.who.bangs <- cbind(NA, dad.who.bangs)
   
-  off.name.hold = paste(rownames(BC.family.make[get.mom.who.bangs,]), "zBCz", rownames(BC.family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),]), i, sep = "X")
+  off.name.hold = paste(rownames(BC.family.make[get.mom.who.bangs,]), "cBCc", rownames(BC.family.make[(max(Nfamilies$Moth)+get.dad.who.bangs),]), i, sep = "X")
   ## Can replace 50 with number of offsrping later
-  off.gens.hold = data.frame(matrix(vector(), 50, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
+  off.gens.hold = data.frame(matrix(vector(), family.size, (length(ColumnData.Dup)+1))) ### have to create a data frame with the same number of columns as there are alleles, + 1 for the ID, and number of 
                                                                 ### because it this data frame is specified here, it will thus blank it each time the loop goes through parent pairs
   
     mom.matrix <- data.frame(matrix(vector(), length(mom.who.bangs)/2, 2))
@@ -712,7 +733,7 @@ mom.matrix$X2 = t(mom.who.bangs[c(F,T)])
 dad.matrix <- data.frame(matrix(vector(), length(dad.who.bangs)/2, 2))
 dad.matrix$X1 <- t(dad.who.bangs[c(T,F)])
 dad.matrix$X2 <- t(dad.who.bangs[c(T,F)])
-    for(j in 1:50){ ### for each parent pair, want to make a number of simulated offpsring. 
+    for(j in 1:family.size){ ### for each parent pair, want to make a number of simulated offpsring. 
     
 dad.out <- apply(t(dad.matrix), 2, sample, 1)
 mom.out <- apply(t(mom.matrix), 2, sample, 1)
@@ -733,8 +754,9 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
       } # J Closure
   
   #gen.dat.file <- gsub(pattern = "")
-    
-  gen.dat.file = paste("gBC", off.name.hold,  sep = ".") ## makes an object name consisting of genotypes + the two parent names
+    gen.fam <- paste0("CC_fam_", h,  "_")
+  gen.dat.file <- gsub(x =  off.name.hold, pattern = "Pure", replacement = gen.fam)
+ 
     assign(x = gen.dat.file, value = off.gens.hold, envir = globalenv()) ## assigns the object name to the generated simulated offspring genotypes, and then assigns it to the global env.
   BC.get.cross.names = rbind(BC.get.cross.names, gen.dat.file)
 } # I Closure
@@ -743,21 +765,21 @@ mom.out <- apply(t(mom.matrix), 2, sample, 1)
 } # H Closure
  
 
-
+l=1
 get.BC.names = NULL
 for(l in 1:length(BC.family.list)){
   get.string.BC = (BC.family.list[l])
-  to.get.BC = which(str_detect(ls(), pattern = "gBC.") == TRUE)
+  to.get.BC = which(str_detect(ls(), pattern = paste0("CC_fam_",l,"_")) == TRUE)
   objects.BC = ls()
   geno.list.BC = list(mget(objects.BC[c(min(to.get.BC):max(to.get.BC))]))
    geno.unlist.BC = unlist(geno.list.BC, recursive = FALSE)
    geno.rbind.BC = do.call(rbind, geno.unlist.BC)
-  
+  out.string.BC <- gsub(x = get.string.BC, pattern = "BC.pure.", replacement = "BC_")
    
-   geno.out.BC <- sample_n(tbl = geno.rbind.BC, size = 50, replace = FALSE)
+   geno.out.BC <- sample_n(tbl = geno.rbind.BC, size = family.size, replace = FALSE)
 
-  assign(x = get.string.BC, value = geno.out.BC, envir = globalenv())
-  get.BC.names = rbind(get.BC.names, get.string.BC)
+  assign(x = out.string.BC, value = geno.out.BC, envir = globalenv())
+  get.BC.names = rbind(get.BC.names, out.string.BC)
   #get.BC.names <- gsub(pattern = "BC.", replacement = "BC_", x = get.BC.names)
 } 
   
@@ -809,19 +831,15 @@ for(b in 1:length(get.F1.names)){
  fam.to.cv.names <- data.frame(get(fam.to.convert.indv.names))
   cv.nm <- fam.to.cv.names$ID
   
-    cv.nm <- gsub(pattern = "[0,2-9]", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "[0-9]", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "X", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "\\_", x = cv.nm, replacement = "")
     cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.[0-9]", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "z", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.1", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\_1", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.\\_", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "\\_\\.", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "Pure.", x = cv.nm, replacement = "")
+    cv.nm <- gsub(pattern = "zF.z.", x = cv.nm, replacement = "F1.")
     cv.nm <- gsub(pattern = "\\.$", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "[0-9]$", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "Pure_", x = cv.nm, replacement = "F1_")
+    
+    cv.nm <- paste("F1", cv.nm, sep="_")
 
     fam.to.cv.names$ID <- cv.nm
   
@@ -836,21 +854,20 @@ for(b in 1:length(get.F2.names)){
   
  fam.to.cv.names <- data.frame(get(fam.to.convert.indv.names))
   cv.nm <- fam.to.cv.names$ID
-    cv.nm <- gsub(pattern = "F2", x = cv.nm, replacement = "F_2")
-    cv.nm <- gsub(pattern = "[0,2-9]", x = cv.nm, replacement = ".")
+    
+    cv.nm <- gsub(pattern = "[0-9]", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "X", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.[0-9]", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "z", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.1", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\_1", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.\\_", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "\\_\\.", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "\\_", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "A\\.", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "\\.$", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "[0-9]$", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "F1_", x = cv.nm, replacement = "F2_")
-    cv.nm <- gsub(pattern = "F\\.", x = cv.nm, replacement = "F2.")
+    cv.nm <- gsub(pattern = "fam", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "^\\.", x = cv.nm, replacement = "")
+    cv.nm <- gsub(pattern = "zF.z", x = cv.nm, replacement = "F1")
+    cv.nm <- gsub(pattern = "z", x = cv.nm, replacement = "F1")
+    cv.nm <- gsub(pattern = "bF.b", x = cv.nm, replacement = "F2")
+    cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "^\\.", x = cv.nm, replacement = "F2_")
 
     fam.to.cv.names$ID <- cv.nm
   
@@ -865,19 +882,19 @@ for(b in 1:length(get.BC.names)){
   fam.to.cv.names <- get(fam.to.convert.indv.names)
   cv.nm <- fam.to.cv.names$ID
   
-    cv.nm <- gsub(pattern = "[0,2-9]", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "[0-9]", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "X", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.[0-9]", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "z", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.1", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\_1", x = cv.nm, replacement = ".")
-    cv.nm <- gsub(pattern = "\\.\\_", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "\\_\\.", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "\\_", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "A\\.", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
     cv.nm <- gsub(pattern = "\\.$", x = cv.nm, replacement = "")
-    cv.nm <- gsub(pattern = "[0-9]$", x = cv.nm, replacement = "")
-
+    cv.nm <- gsub(pattern = "fam", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "^\\.", x = cv.nm, replacement = "")
+    cv.nm <- gsub(pattern = "zF.z", x = cv.nm, replacement = "F1")
+    cv.nm <- gsub(pattern = "z", x = cv.nm, replacement = "F1")
+    cv.nm <- gsub(pattern = "cBCc", x = cv.nm, replacement = "BC")
+    cv.nm <- gsub(pattern = "\\.{2,}", x = cv.nm, replacement = ".")
+    cv.nm <- gsub(pattern = "Pure.", x = cv.nm, replacement = "Pure_")
     fam.to.cv.names$ID <- cv.nm
   
   
