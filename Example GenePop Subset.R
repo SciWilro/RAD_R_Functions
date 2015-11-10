@@ -31,3 +31,8 @@ subset.GenePop(GenePop=GenePopData,
 #Subset out populations based on text based population names but keeping all loci
 subset.GenePop(GenePop=GenePopData,
                dir="Example_Parsed_pops_GenePop_Alpha.txt",sPop=c("BDN","DHB","GNR","LHR"))
+
+#Subset out Loci based on their order in the genepop file. 
+subset.GenePop(GenePop=GenePopData,
+               subs=c(1,3,5,7,8,400,925),
+               dir="Example_Parsed_Outlier_LociNumber_GenePop.txt",keep=TRUE)

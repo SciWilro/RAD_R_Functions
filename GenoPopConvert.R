@@ -1,7 +1,8 @@
 subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL){
   
 ## GenePop = the genepop file with all loci 
-## subs = the loci names of interest
+## subs = the loci names of interest or a vector which corresponds the the order of which
+  ## they appear in the genepop file. (i.e. subs <- c(1,2,3,4)) would return the first 4 loci
 ## keep = logical vector which defines whether you want to remove the loci or keep them. 
   ## the default is to keep them (keep=TRUE) assuming you are removing neutral markers and only keeping the subs ("Outliers")
 ## sPops is the populations of interest. Note these are specified in the order which they appear in the
@@ -85,20 +86,42 @@ tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "P
     
     temp2$Pop <- PopIDs;rm(hold,pophold,tPops,PopIDs)
 
-## Now subset out the the data according to the specified loci ad whether or not you want to keep them. 
+## Now subset out the the data according to the specified loci and whether or not you want to keep them. 
     
-      if(!keep)
-      {
-        if(length(subs)>0){reqCols <- temp2[,-which(names(temp2)%in%subs)]}
-        if(length(subs)==0){reqCols <- temp2}
+    if(is.numeric(subs))
+      { #column number instead of name depending on the output from Outlier detection
+          
+          if(!keep) # neutral
+          {
+            if(length(subs)>0){reqCols <- temp2[,-subs]}
+            if(length(subs)==0){reqCols <- temp2}
+          }
+          
+          
+          if(keep) # outliers or loci under divergent selection
+          {
+            PopInd=which(names(temp2)=="Pop")
+            if(length(subs)>0){reqCols <- temp2[,c(subs,PopInd)]}
+            if(length(subs)==0){reqCols <- temp2}
+          }
+      
+    }
+    
+    if(!is.numeric(subs))
+      { #column name
+        
+      if(!keep)# neutral
+          {
+            if(length(subs)>0){reqCols <- temp2[,-which(names(temp2)%in%subs)]}
+            if(length(subs)==0){reqCols <- temp2}
+          }
+        
+        if(keep)# outliers or loci under divergent selection
+            {
+            if(length(subs)>0){reqCols <- temp2[,c(subs,"Pop")]}
+            if(length(subs)==0){reqCols <- temp2}
+            }
       }
-    
-    
-    if(keep)
-        {
-        if(length(subs)>0){reqCols <- temp2[,c(subs,"Pop")]}
-        if(length(subs)==0){reqCols <- temp2}
-        }
         
 ## Now subset the rows 
     # is a population subset required
@@ -111,7 +134,7 @@ tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "P
       temp2 <- temp2[ind,]
       }
       
-      if(sum(is.numeric(sPop))==0){ # if the subsetted populations are alpha
+      if(sum(is.numeric(sPop))==0){ # if the subsetted populations are character indexes
         reqCols <- reqCols[which(NameExtract %in% sPop),]
         temp <- temp[which(NameExtract %in% sPop),]
         temp2 <- temp2[which(NameExtract %in% sPop),]
@@ -158,18 +181,36 @@ tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "P
   
     ## Add the column labels and the stacks version
     
-    ## Add the column labels and the stacks version
-    
-    if(!keep)
-    {
-      if(length(subs)==0){Output <- c(stacks.version,names(temp2)[-length(names(temp2))],Loci)}
-      if(length(subs)>0){Output <- c(stacks.version,names(temp2)[-which(names(temp2)%in%c(subs,"Pop"))],Loci)}
+    if(is.numeric(subs))
+      { #Column numbers
+        if(!keep)
+        {
+          PopInd=which(names(temp2)=="Pop")
+          if(length(subs)==0){Output <- c(stacks.version,names(temp2)[-PopInd],Loci)}
+          if(length(subs)>0){Output <- c(stacks.version,names(temp2)[-c(subs,PopInd)],Loci)}
+        }
+        
+        if(keep)
+        {
+          PopInd=which(names(temp2)=="Pop")
+          if(length(subs)==0){Output <- c(stacks.version,names(temp2)[-PopInd],Loci)}
+          if(length(subs)>0){Output <- c(stacks.version,names(reqCols),Loci)}
+        }
     }
     
-    if(keep)
-    {
-      if(length(subs)==0){Output <- c(stacks.version,names(temp2)[-length(names(temp2))],Loci)}
-      if(length(subs)>0){Output <- c(stacks.version,subs,Loci)}
+    if(!is.numeric(subs))
+    { # column names
+      if(!keep)
+      {
+        if(length(subs)==0){Output <- c(stacks.version,names(temp2)[-length(names(temp2))],Loci)}
+        if(length(subs)>0){Output <- c(stacks.version,names(temp2)[-which(names(temp2)%in%c(subs,"Pop"))],Loci)}
+      }
+      
+      if(keep)
+      {
+        if(length(subs)==0){Output <- c(stacks.version,names(temp2)[-length(names(temp2))],Loci)}
+        if(length(subs)>0){Output <- c(stacks.version,subs,Loci)}
+      }
     }
     
     # Save the file
