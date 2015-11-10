@@ -173,6 +173,6 @@ tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "P
     }
     
     # Save the file
-    write.table(Output,dir,col.names=FALSE,row.names=FALSE)
+    write.table(Output,dir,col.names=FALSE,row.names=FALSE,quote=FALSE)
 
 } #End function
