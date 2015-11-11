@@ -152,7 +152,7 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL){
     
     
     #Get the row numbers where population "Pop" tag will be inserted
-    #f(length(table(temp2$Pop))==1){return(print("Need more than one populations for subsetting"))}
+    #if(length(table(temp2$Pop))==1){return(print("Need more than one populations for subsetting"))}
     
     if(length(table(temp2$Pop))==2){PopPosition = PopLengths+1}
     
