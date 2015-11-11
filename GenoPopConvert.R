@@ -54,7 +54,7 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL){
     snpData <- GenePop[Pops[1]:NROW(GenePop),]
 
 #Get a datafile with just the snp data no pops
-tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "POP") ## Changed because we allowed
+    tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "POP") ## Changed because we allowed
 ## alternate spelling on line 48, so had to change this so it would identify properly and not make an empty DF
     snpData <- snpData[-tempPops,]
 
@@ -152,7 +152,7 @@ tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "P
     
     
     #Get the row numbers where population "Pop" tag will be inserted
-    if(length(table(temp2$Pop))==1){return(print("Need more than one populations for subsetting"))}
+    #f(length(table(temp2$Pop))==1){return(print("Need more than one populations for subsetting"))}
     
     if(length(table(temp2$Pop))==2){PopPosition = PopLengths+1}
     
@@ -173,8 +173,8 @@ tempPops <- which(snpData$data=="Pop"| snpData$data =="pop" | snpData$data == "P
     #Paste these to the Loci
     Loci <- paste(PopVec,Loci,sep="")
     
-    #Insert the value of "Pop" which partitions the data among populations
-    Loci <- insert.vals(Vec=Loci,breaks=PopPosition,newVal="Pop")
+    #Insert the value of "Pop" which partitions the data among populations #only if more than one population
+    if(length(table(temp2$Pop))!=1){Loci <- insert.vals(Vec=Loci,breaks=PopPosition,newVal="Pop")}
     
     #Add the first "Pop" label
     Loci <- c("Pop",Loci) 
