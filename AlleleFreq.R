@@ -30,7 +30,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
   ## OrderPops <- is a dataframe which contains the latitute and longitude of each sample location. 
   ## if no order is specified the funtion will use the default alphabetical order
   
-  ## Standardize <- logical vector (default: TRUE) which specifies whether (TRUE) or not (FALSE)
+  ## standardize <- logical vector (default: TRUE) which specifies whether (TRUE) or not (FALSE)
   ## to standardize the allele frequencies to 0-1 within each SNP among populations
   
   ## optimizer <- logical vector (default: TRUE) which specifies whether (TRUE) or not (FALSE)
@@ -48,7 +48,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
   
   #Libraries ----------
   #Check to make sure the packages required are there
-  packages <- c("dplyr", "tidyr", "stringr","ggplot2") ## which packages do we need?
+  packages <- c("dplyr", "tidyr", "stringr","ggplot2","scales") ## which packages do we need?
   if (length(setdiff(packages, rownames(installed.packages()))) > 0) { ### checks that the required packages are among those 
     ## installed by comparing the differences in the length of a vector of items included in list (i.e. is package among all installed)
     install.packages(setdiff(packages, rownames(installed.packages())))  ## if a package is not installed, insall it
@@ -59,6 +59,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
     require(tidyr)
     require(stringr)
     require(ggplot2)
+    require(scales)
   
   #Functions -----------
   
@@ -199,7 +200,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
           
       ## Get the Alpha names from the 
           NamePops=temp[,1] # Names of each
-          NameExtract=str_extract(NamePops, "[A-Z]+" ) # extract the text from the individuals names to denote population
+          NameExtract=str_extract(NamePops, "[a-zA-Z]+" ) # extract the text from the individuals names to denote population
       
       ## Now add the population tags using npops (number of populations and Pops for the inter differences)
           tPops <- c(Pops,NROW(GenePop))
@@ -287,7 +288,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
       }
     
     #standardize the allele frequency
-      if(Standardize) #0-1 scaled (TRUE)
+      if(standardize) #0-1 scaled (TRUE)
       {
         HeatMapData <- as.data.frame(HeatMapData%>%group_by(SNP)%>%mutate(FreqStand=scale01(Freq))%>%ungroup())
       }
@@ -308,7 +309,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
       HeatMapData$opt_FreqStand <- HeatMapData$FreqStand
       HeatMapData[which(is.na(HeatMapData$opt_FreqStand)),"opt_FreqStand"] <- 0
       
-      if(Standardize & optimizer)
+      if(standardize & optimizer)
         {
           #Identify SNP which need to be inverted
            invSNPS <- HeatMapData%>%filter(Pop==refPop,opt_FreqStand<0.5)%>%select_(.,"SNP")
@@ -324,8 +325,8 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
       
 #Create the heatmap --------------
       
-      if(Standardize){p1=ggplot(HeatMapData,aes(x=SNP,y=Pop,fill=FreqStand))} #0-1 scaled (TRUE)
-      if(!Standardize){p1=ggplot(HeatMapData,aes(x=Pop,y=SNP,fill=Freq))} # 0-1 scaled (FALSE)
+      if(standardize){p1=ggplot(HeatMapData,aes(x=SNP,y=Pop,fill=FreqStand))} #0-1 scaled (TRUE)
+      if(!standardize){p1=ggplot(HeatMapData,aes(x=Pop,y=SNP,fill=Freq))} # 0-1 scaled (FALSE)
       
       p1=p1+geom_tile()+
         scale_y_discrete(expand = c(0,0))+scale_x_discrete(expand = c(0,0))+
@@ -333,8 +334,8 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
         theme(legend.position="bottom",axis.text.x = element_text(angle = 45, hjust = 1))+
         scale_fill_gradient(low="blue",high=muted("red"))
       
-      if(Standardize){p1=p1+labs(y="Population",x="SNP",fill="Standardized allele frequency")}
-      if(!Standardize){p1=p1+labs(y="Population",x="SNP",fill="Allele frequency")}
+      if(standardize){p1=p1+labs(y="Population",x="SNP",fill="Standardized allele frequency")}
+      if(!standardize){p1=p1+labs(y="Population",x="SNP",fill="Allele frequency")}
 
       
 #Return function output -----------
