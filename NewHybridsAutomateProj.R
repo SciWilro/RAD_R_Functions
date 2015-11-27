@@ -72,8 +72,8 @@ for(j in 1:length(files.anal)){ ## for each file to be analyzed
   to.file <- NH.copies[j] ## what copy of NH do you copy the file to be analyzed to?
   from.file <- files.anal[j] ## the file to be copied
   
-  to.dir <- paste(where.temp, to.file) ## where is the NH copy - this is a directory
-  from.dir <- paste(folder.data, to.file) ### where is the data file to be copied
+  to.dir <- paste0(where.temp, to.file, "/") ## where is the NH copy - this is a directory
+  from.dir <- paste0(folder.data, from.file) ### where is the data file to be copied
   
   file.copy(from = from.dir, to = to.dir) ## copy it on ovah
   
@@ -122,7 +122,7 @@ for(k in 1:length(NH.copy.list)){
 ### so ... the whole moving
 
 ## this - this right here will launch NH if R is run from the command line/terminal - but the program wont' automaticall run
-  ## because it demands user specified data - goes out of command line, into NH preventing further 'code' input
+  ## because it demands user specified data - goes out of command line, into NH preventing further 'code' 
 system("cd /Users/brendanwringe/Desktop/DFO\\ Aquaculture\\ Interaction/NH\\ Trial/NH.temp/newhybrids_1/; newhybs")
 
 
