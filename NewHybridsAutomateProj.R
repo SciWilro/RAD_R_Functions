@@ -51,7 +51,8 @@ find.the.fucking.hybrids <- function(folder.data, where.NH, burnin, sweeps){
     
     ## now to execute the command
     
-    
+    options(scipen = 999) ### if the number of digits is too big in either burnin or sweeps
+    ## R will output in scientific notation, which is not interpreted correctly by NH
     
     burnin.do <- paste("--burn-in", burnin, sep=" ")
     sweeps.do <- paste("--num-sweeps", sweeps, sep=" ")
