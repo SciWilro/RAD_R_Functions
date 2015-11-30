@@ -1,4 +1,4 @@
-NH.auto.win -> function(folder.data, where.NH, burnin, sweeps){
+NH.auto.win <- function(folder.data, where.NH, burnin, sweeps){
 
 options(scipen = 999) ## have to change the global R settings because NH doesn't understand scientific notation'
 

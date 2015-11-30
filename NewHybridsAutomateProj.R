@@ -1,4 +1,4 @@
-find.the.fucking.hybrids <- function(folder.data, where.NH, burnin, sweeps){
+NH.auto.OSX <- function(folder.data, where.NH, burnin, sweeps){
     
     files.anal <- list.files(path = folder.data)
     
