@@ -48,11 +48,10 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,Orde
   
   #Libraries ----------
   #Check to make sure the packages required are there
-  packages <- c("dplyr", "tidyr", "stringr","ggplot2","scales") ## which packages do we need?
-  if (length(setdiff(packages, rownames(installed.packages()))) > 0) { ### checks that the required packages are among those 
-    ## installed by comparing the differences in the length of a vector of items included in list (i.e. is package among all installed)
-    install.packages(setdiff(packages, rownames(installed.packages())))  ## if a package is not installed, insall it
-  } ### this will only work if someone has the CRAN mirror set (I would assume everyone would?)
+  packages <- c("dplyr", "tidyr", "stringr","ggplot2","scales")
+  if (length(setdiff(packages, rownames(installed.packages()))) > 0) { 
+    install.packages(setdiff(packages, rownames(installed.packages())))  
+  } 
 
   #load each library
     require(dplyr)
