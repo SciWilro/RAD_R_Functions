@@ -1,4 +1,4 @@
-NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name){
+NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name, plot.it="No"){
     
     res.files.list <- list.files(path = res.folder)
     
@@ -118,4 +118,30 @@ NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name){
     
     file.remove(clump.res.file.from)
     
-  }
+    
+    if(plot.it == "Yes"){
+      NH_melt <- melt(data = run.consensus.convert.to.orig.format, id.vars = "Indv") ## melt the data to allow the data to be stacked by indivudal
+colnames(NH_melt) <- c("Indv", "PopProb", "CumProb") ## rename so that its prettier
+
+## lets give the plot some pretty colours
+col.vec <- c("red", "blue", "grey", "green", "black", "yellow", "brown")
+
+## to be used later if decide to break the data or if there are different numbers of individuals in each population type
+# break.by <- nrow(NH_output)/6
+# break.vec <- c(break.by, (break.by*2), (break.by*3), (break.by*4), (break.by*5), (break.by*6))
+
+## make a nice pretty little plot - and save that bad boy
+f.name <- paste0(res.folder, res.name, ".consensus.pdf")
+pdf(file = f.name)
+pretty.plot <- ggplot(NH_melt, aes(x = Indv, y=CumProb, fill=PopProb))
+print(pretty.plot+geom_bar(stat="identity", position = "stack") + scale_fill_manual(values=col.vec)+ylab("Cumulative Probability")+xlab("Individual"))
+dev.off()
+      
+      
+      
+    }
+    
+    
+    
+    
+}
