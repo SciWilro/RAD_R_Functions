@@ -1,4 +1,4 @@
-NH.auto.win <- function(folder.data, where.NH, burnin, sweeps){
+NH.auto.win -> function(folder.data, where.NH, burnin, sweeps){
 
 options(scipen = 999) ## have to change the global R settings because NH doesn't understand scientific notation'
 
@@ -36,6 +36,12 @@ NH.copy.list <- list.files(path = where.temp)
 burnin.do <- paste("--burn-in", burnin, sep=" ")
 sweeps.do <- paste("--num-sweeps", sweeps, sep=" ")
 
+ ## add in randomized seeds - the NH guide says they should be small.
+    
+    r.seed <- sample(x = c(1:10), size = 2)
+    
+    do.seed <- paste("--seeds", r.seed, sep=" ")
+
 ## you know I love them NULL vecssssss
 jobs.vector <- NULL
 
@@ -45,7 +51,7 @@ for(b in 1:length(NH.copy.list)){
 b.copy <- NH.copy.list[b]
 file.do <- paste("-d", files.anal[b])
 what.temp <- paste0(where.temp, b.copy)
-path.hold <- paste("cd", paste0(what.temp, " &"), "newhybrids.exe", file.do, burnin.do, sweeps.do, "--no-gui", sep = " ") ## must separate
+path.hold <- paste("cd", paste0(what.temp, " &"), "newhybrids.exe", file.do, burnin.do, sweeps.do, do.seed, "--no-gui", sep = " ") ## must separate
 ## the get directory form teh command with & in Windows version
 jobs.vector <- rbind(jobs.vector, path.hold) ### rbind - will use ROW apply later
 }
@@ -57,7 +63,45 @@ makecl <- makeCluster( mc.cores, outfile="" )
 ### parallele row apply - apply each command in the vector to the shell =
 parRapply(cl = makecl, x=jobs.vector, FUN=shell)
 
+  
+   ## create a new folder to put the results in - remember the inception thing - be smart
+dir.create(path = paste0(folder.data, "NH.Results"))
+
+res.path.make <- paste0(folder.data, "NH.Results") ## get the path to the new results folder
+
+# k = 1 # for internal code checking
+
+## get the results generated for each copy of NH/file to be analyzed
+for(k in 1:length(NH.copy.list)){
+  
+  ## make a nice name for the folders of resutls we are goign to make - so so pretty
+  res.name <- paste0(files.anal[k], "_Results") # file name + results - not as pretty as it could be 
+  dir.create(path = paste0(res.path.make, "/", res.name)) ## make that folder to put the resutls in
+  
+  where.the.results.to <- paste0(res.path.make, "/", res.name, "/") ## where did you make that folder?
+  
+  NH.copy.to.get <- NH.copy.list[k] ## what copy of NH are we goign to look in?
+  find.res.vec <- list.files(path = paste0(where.temp, NH.copy.to.get), pattern = "aa-") ## find all the files that
+    ## begin with "aa-" inside that copy of NH - big shout out to Eric Anderson for using a regular string in the results name!
+  
+  find.res.vec.path <- paste0(paste0(where.temp, NH.copy.to.get, "/"), find.res.vec) ## find the path to all the files ID'd
+  file.copy(from = find.res.vec.path, to = where.the.results.to) ## copy those files to the proper results folder
+  
+  ## keep making it pretty by renaming the results files so you know what data set they are associated with
+  rename.vec <- gsub(x = find.res.vec, pattern = "aa-", replacement = paste0(files.anal[k], "_"))
+  
+  ## again - need a vectr that shows their computr postion
+  rename.vec.path <- paste0(where.the.results.to, rename.vec) ## vector with new names
+  old.name.vec.path <- paste0(where.the.results.to, find.res.vec) ## vector with old names
+  
+  file.rename(from = old.name.vec.path, to = rename.vec.path) ## check that vectorized functionality in file.rename - mad props!
+} 
+
 ## gotta stop the slaves somehow
-stopCluster(makecl) ### I think this works???
+#stopCluster(makecl) ### I think this works???
+
+library(snow)
+stopCluster(makecl)
+mpi.quit()
 
 }
