@@ -50,7 +50,11 @@ NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name){
     
     CLUMPP.R <- paste("R", i) ## number of runs - take from the number of files entered
     
-    CLUMPP.M <- paste("M", 1) ### method ### leave as "FullSearch" for now - likely will not have an absurd number of runs, so time shoudl not be an issue
+    CLUMPP.M <- paste("M", 2) ### method ### use Greedy
+    
+    Greedy.option <- paste("GREEDY_OPTION", 2)
+    
+    Greedy.repeats <- paste("REPEATS", i)
     
     CLUMPP.W <- paste("W", 0) ## weight by number of individuals in each population as specified by datafile - no data file specified at this point, so leave as "No"
     
@@ -68,8 +72,10 @@ NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name){
     
     E.perm.file <- paste("EVERY_PERMFILE", paste0(res.name, ".every.permfile"))
     
-    params.out <- data.frame(rbind(CLUMPP.data.type, CLUMPP.ind.file.1, CLUMPP.outfile, CLUMPP.miscfile, CLUMPP.K, CLUMPP.C, CLUMPP.R, CLUMPP.M, CLUMPP.W, CLUMPP.S,
-      O.Warnings, Ord.run, P.permuted.data, Permuted.data.file, P.every.perm, E.perm.file))
+    P.random.input.ord <- "PRINT_RANDOM_INPUTORDER 0"
+    
+    params.out <- data.frame(rbind(CLUMPP.data.type, CLUMPP.ind.file.1, CLUMPP.outfile, CLUMPP.miscfile, CLUMPP.K, CLUMPP.C, CLUMPP.R, CLUMPP.M, Greedy.option, 
+      Greedy.repeats, CLUMPP.W, CLUMPP.S, O.Warnings, Ord.run, P.permuted.data, Permuted.data.file, P.every.perm, E.perm.file, P.random.input.ord))
     
     
     CLUMPP.param.file <- paste0(res.name, ".paramfile")
