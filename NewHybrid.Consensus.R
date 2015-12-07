@@ -1,0 +1,115 @@
+NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name){
+    
+    res.files.list <- list.files(path = res.folder)
+    
+    num.runs <- length(res.files.list) ## CLUMPP Requires the number of runs to be specified. This is the # of times New Hybrids was run
+    
+    ### amalgamate the runs into one data frame
+    
+    out.data <- NULL
+    for(i in 1:length(res.files.list)){
+      name.i <- res.files.list[i]
+      
+      where.data.i <- paste0(res.folder, res.files.list[i])
+      
+      hold.data.i <- read.table(file = where.data.i, header = T)
+      
+      out.data <- rbind(out.data, hold.data.i)
+      
+    }
+    
+    dim(out.data)
+    
+    no.row.vec <- c(1:nrow(out.data))
+    ind.name.vec <- noquote(paste0("(", out.data[,2], ")"))
+    pop.vec <- rep(4, length= nrow(out.data))
+    colon.vec <- rep(":", length = nrow(out.data))
+    
+    data.clumpp.format <- data.frame(no.row.vec, out.data[,1], ind.name.vec, pop.vec, colon.vec, out.data[,c(3:length(out.data))])
+    
+    ### output this to the clump folder
+    
+    CLUMPP.indv.file.PP <- paste0(where.CLUMPP, "/", res.name, ".indfile") #### individual file name plus path
+    CLUMPP.ind.file <- paste0(res.name, ".indfile") ## just individual file name
+    
+    write.table(data.clumpp.format, file = CLUMPP.indv.file.PP, col.names = F, row.names = F, quote = FALSE, sep = "\t") ### write the combined runs out in the CLUMPP format
+    
+    ## CLUMPP requires a Parameter file - create here
+      
+    CLUMPP.data.type <- paste("DATATYPE", "0")
+    
+    CLUMPP.ind.file.1 <- paste("INDFILE", CLUMPP.ind.file, sep = " ")
+     
+    CLUMPP.outfile <- paste("OUTFILE", paste0(res.name, ".outfile"))
+    
+    CLUMPP.miscfile <- paste("MISCFILE", paste0(res.name, ".miscfile"))
+    
+    CLUMPP.K <- paste("K", length(3:length(out.data))) ## Number of "clusters" = generations/populations
+    
+    CLUMPP.C <- paste("C", length(unique(out.data$X50000_sweeps))) ### number of individuals - calculate from the nubmer of unique values
+    
+    CLUMPP.R <- paste("R", i) ## number of runs - take from the number of files entered
+    
+    CLUMPP.M <- paste("M", 1) ### method ### leave as "FullSearch" for now - likely will not have an absurd number of runs, so time shoudl not be an issue
+    
+    CLUMPP.W <- paste("W", 0) ## weight by number of individuals in each population as specified by datafile - no data file specified at this point, so leave as "No"
+    
+    CLUMPP.S <- paste("S", 2) ### pairwise similarity statistic to be used - leave as default for now
+    
+    O.Warnings <- "OVERRIDE_WARNINGS 1"
+    
+    Ord.run <- "ORDER_BY_RUN 0"
+    
+    P.permuted.data <- "PRINT_PERMUTED_DATA 1"
+    
+    Permuted.data.file <- paste("PERMUTED_DATAFILE", paste0(res.name, ".perm_datafile"))
+    
+    P.every.perm <- "PRINT_EVERY_PERM 0"
+    
+    E.perm.file <- paste("EVERY_PERMFILE", paste0(res.name, ".every.permfile"))
+    
+    params.out <- data.frame(rbind(CLUMPP.data.type, CLUMPP.ind.file.1, CLUMPP.outfile, CLUMPP.miscfile, CLUMPP.K, CLUMPP.C, CLUMPP.R, CLUMPP.M, CLUMPP.W, CLUMPP.S,
+      O.Warnings, Ord.run, P.permuted.data, Permuted.data.file, P.every.perm, E.perm.file))
+    
+    
+    CLUMPP.param.file <- paste0(res.name, ".paramfile")
+    CLUMPP.param.file.PP <- paste0(where.CLUMPP,"/", CLUMPP.param.file) #### param file name plus path
+    
+    write.table(x = params.out, file = CLUMPP.param.file.PP, col.names = F, row.names = F, quote = FALSE, sep = "\t") ### write the combined runs out in the CLUMPP format
+    
+    ### run CLUMPP
+    
+    where.CLUMPP2 <- gsub(x = where.CLUMPP, pattern = " ", replacement = "\\ ", fixed = T)
+    
+    to.run.CLUMPP <- paste0("cd ", where.CLUMPP2, "; ./CLUMPP ", CLUMPP.param.file)
+    
+    system(to.run.CLUMPP)
+    
+    clump.res.file.list <- list.files(path = where.CLUMPP)
+    
+    file.to.get <- paste0(where.CLUMPP, "/", res.name, ".outfile")
+   
+    run.consensus <- read.table(file.to.get)
+    
+    run.consensus.convert.to.orig.format <- run.consensus[-c(2,3,4,5)]
+    
+    colnames(run.consensus.convert.to.orig.format) <- c("Indv", "Pure1", "Pure2", "F1", "F2", "BC1", "BC2")
+    
+    ## now export the consensus in NH format
+    
+    NH.format.out <- paste0(res.folder, res.name, ".consensus.csv")
+    
+    write.csv(x = run.consensus.convert.to.orig.format, file = NH.format.out, row.names = FALSE)
+
+    str_detect(clump.res.file.list, pattern = res.name)
+    
+    clump.res.file.list.to.copy <- clump.res.file.list[which(str_detect(clump.res.file.list, pattern = res.name))]
+    
+    clump.res.file.from <- paste0(where.CLUMPP, "/", clump.res.file.list.to.copy)
+    clump.res.file.to <- paste0(res.folder, clump.res.file.list.to.copy)
+    
+    file.copy(from = clump.res.file.from, to = clump.res.file.to)
+    
+    file.remove(clump.res.file.from)
+    
+  }
