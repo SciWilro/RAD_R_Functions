@@ -46,7 +46,7 @@ NH.consensus.auto <- function(res.folder, where.CLUMPP, res.name, plot.it="No"){
     
     CLUMPP.K <- paste("K", length(3:length(out.data))) ## Number of "clusters" = generations/populations
     
-    CLUMPP.C <- paste("C", length(unique(out.data$X50000_sweeps))) ### number of individuals - calculate from the nubmer of unique values
+    CLUMPP.C <- paste("C", length(unique(out.data[,1]))) ### number of individuals - calculate from the nubmer of unique values
     
     CLUMPP.R <- paste("R", i) ## number of runs - take from the number of files entered
     
