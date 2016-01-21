@@ -12,7 +12,7 @@ TrainingGenePop <- function(GenePopData,perc=0.5,Dir,ranSeed=NULL){
   #ranSeed = is the randomization seed to be used, this is important if you want to repeat an analysis. Default this is 23. If not specified
   
   # Is the directory specified? If not default to current directory
-      if(!exists("Dir",mode = "function")){Dir <- paste0(getwd(),"/")}
+      #if(!exists("Dir",mode = "function")){Dir <- paste0(getwd(),"/")}
   
   #Check to make sure the packages required are there
       packages <- c("dplyr", "tidyr", "stringr") ## which packages do we need?
