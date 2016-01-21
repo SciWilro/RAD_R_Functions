@@ -20,6 +20,16 @@ TrainingGenePop <- function(GenePopData,perc=0.5,Dir,ranSeed=NULL){
          install.packages(setdiff(packages, rownames(installed.packages())))  ## if a package is not installed, insall it
       } 
   
+      ## Function for inserting rows
+      insert.vals <- function(Vec,breaks,newVal){
+        break.space <- 1:(length(breaks))
+        breaks <- breaks+break.space-1 #To space out the insertion points.
+        newvec <- rep(NA,length(Vec)+length(breaks)) #Preallocate memory by creating final dataframe.
+        for(i in 1:length(breaks)){newvec[breaks[i]]=newVal} #Insert added rows into new dataframe>
+        x <- 1:length(newvec)
+        x <- x[-(breaks)] #Finding the rows of the new dataframe that will receive old rows
+        for(i in 1:length(Vec)){newvec[x[i]]=Vec[i]} 
+        return(newvec)}
   
     #libraries
       require(dplyr)
