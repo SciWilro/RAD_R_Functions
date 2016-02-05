@@ -1,6 +1,6 @@
 AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
                               OrderPops=NULL,standardize=TRUE,SNPlabs=FALSE,
-                              optimizer=TRUE,nopt=4,optdiff=0.30,plot=TRUE){
+                              optimizer=TRUE,nopt=4,optdiff=0.3,plot=TRUE){
   
   #Function details -------------
   
@@ -45,7 +45,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
   
   ## nopt <- (default: 4)number of populations to average the allele frequency to select SNPS for the optimizer
   
-  ## optdiff <- (default: 30) percentage difference between the top nopt and bottom nopt sample locations to be
+  ## optdiff <- (default: 0.3) percentage difference between the top nopt and bottom nopt sample locations to be
   #            used by the optimizer
   
   ## SNPlabs <-  logical vector (default: FALSE) specifying whether you want the SNP names 
