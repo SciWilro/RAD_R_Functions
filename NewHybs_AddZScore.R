@@ -1,6 +1,4 @@
 #Add a column to a NH input file to include the known genotype classes (e.g. z1, etc)
-library(dplyr)
-library(tidyr)
 setwd("C:/Users/Nick/Desktop")
 #Read in the file
 
@@ -8,7 +6,7 @@ NHdata <- read.table("Corr_West.top96_wild.unlinked.S1_R2NH.txt", header = FALSE
 head(NHdata[1:5,])
 #Save the first 5 rows to be added back in at the end.
 addbackin<-NHdata[1:5,]
-
+library(tidyr)
 #Now read it back in but without the first 5 rows.
 NHdata2 <- read.table("Corr_West.top96_wild.unlinked.S1_R2NH.txt", header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE,skip=5)
 head(NHdata2)
@@ -29,7 +27,7 @@ head(NHfinal)
 
 #Now make this an actual file readable by NewHybrids
 Loci <- do.call(paste,c(NHfinal[,], sep=" "))
-Loci<-gsub(pattern = "NA"," ",x = Loci)
+Loci<-gsub("NA"," ",x = Loci)
 Loci2<-c(addbackin,Loci)
 
 write.table(Loci2,file = "NHFinalInput.txt",col.names=FALSE,row.names=FALSE,quote=FALSE)
