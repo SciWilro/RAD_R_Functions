@@ -14,15 +14,14 @@ head(NHdata2)
 names(NHdata2)<-"Data2"
 Nhdata3<-separate(data = NHdata2,col=Data2,into = c("Individual",rep("SNP",96)),sep = " ")
 
-Nhdata4<-as.data.frame(append(Nhdata3,list(Zcode=NA), after = 1))
-write.csv(x = Nhdata4,file = "NHdatasplit.csv",row.names = FALSE, col.names = TRUE)
+write.csv(x = Nhdata3,file = "NHdatasplit.csv",row.names = FALSE)
 
 ###Next, want to make a csv of your z codes per individual that is separate from the file with all the locus names
 #Then merge these together
-Nhdata5<-read.csv("NHdatasplit2.csv")
+Nhdata4<-read.csv("NHdatasplit.csv")
 Zscorevector<-read.csv("ZvectorforNH.csv")
 #Merge
-NHfinal<- merge(y=Nhdata5,x=Zscorevector,by="Individual",all=TRUE)
+NHfinal<- merge(y=Nhdata4,x=Zscorevector,by="Individual",all=TRUE)
 head(NHfinal)
 
 #Now make this an actual file readable by NewHybrids
