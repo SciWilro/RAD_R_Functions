@@ -1,4 +1,4 @@
-subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL, agPop=FALSE, agPopFrame=NULL){
+subset.GenePop2 <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL, agPop=FALSE, agPopFrame=NULL){
   
 ## GenePop = the genepop file with all loci 
 ## subs = the loci names of interest or a vector which corresponds the the order of which
@@ -66,9 +66,9 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL, agPop=FALS
     temp2 <- as.data.frame(do.call(rbind, strsplit(temp$snps," "))) #split characters by spaces
   
     #Contingency to see if R read in the top line as the "stacks version"
-    if (length(temp2)!=length(ColumnData)){colnames(temp2) <- c(stacks.version,ColumnData)}
-    if (length(temp2)==length(ColumnData)){colnames(temp2) <- ColumnData}
-    if (length(temp2)!=length(ColumnData)){stacks.version="No stacks version specified"}
+    #if (length(temp2)!=length(ColumnData)){colnames(temp2) <- c(stacks.version,ColumnData)}
+    #if (length(temp2)==length(ColumnData)){colnames(temp2) <- ColumnData}
+    #if (length(temp2)!=length(ColumnData)){stacks.version="No stacks version specified"}
     colnames(temp2) <- ColumnData
 ## Get the Alpha names from the 
     NamePops=temp[,1] # Names of each
@@ -144,7 +144,7 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL, agPop=FALS
     } # end of subset population if statement
     
     
-
+    if(agPop==FALSE){
     reqCols <- reqCols[,-length(reqCols)] # delete the "Pop" data * last column
 
 #Now recompile the GenePop format
@@ -214,6 +214,60 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL, agPop=FALS
         if(length(subs)>0){Output <- c(stacks.version,subs,Loci)}
       }
     }
+    
+    
+    
+    }### END OF IF agpop = FALSE
+    
+     if(agPop==TRUE){
+      
+        which(names(temp2) == "Pop")
+        which(NameExtract %in% agPopFrame$Opop)
+        temp3 <- temp2[,-which(names(temp2) == "Pop")]
+        temp3$agPop = NameExtract
+        tempAgPop <- temp3[which(NameExtract %in% agPopFrame$Opop),]
+        tempAgPop <- merge(x = tempAgPop, y = agPopFrame, by.y = "Opop", by.x = "agPop")
+        
+        tempAgPop <- tempAgPop[order(tempAgPop$AgPop), ]
+        
+        PopLengths <- table(tempAgPop$AgPop)[-length(tempAgPop$AgPop)]
+        
+       if(length(table(tempAgPop$AgPop))==2){PopPosition = PopLengths[1]+1}
+    
+    if(length(table(tempAgPop$AgPop))>2){ 
+          PopPosition <- c(PopLengths[1]+1,rep(NA,(length(PopLengths)-1)))
+          for (i in 2:length(PopLengths)){
+            PopPosition[i] <- PopLengths[i]+PopPosition[i-1]
+          }
+    }
+    
+        tempAgPop <- tempAgPop[-which(colnames(tempAgPop)=="AgPop")]
+        tempAgPop$agPop <- paste0(tempAgPop$agPop, " ,  ")
+    #tempAgPop <- tempAgPop[,-which(names(tempAgPop)=="AgPop")]
+    #AddPop <- tempAgPop$agPop
+    #tempAgPop$agPop <- paste0(tempAgPop$agPop, " ,  ")
+    #AddPop <- paste0(AddPop, " ,  ")
+    # paste together the Loci as one long integer seperated for each loci by a space
+    #tempAgPop <- tempAgPop[,-which(names(tempAgPop)== "agPop")]
+    #Loci <- paste0(AddPop, tempAgPop)
+    Loci <- do.call(paste,c(tempAgPop[,], sep=" "))
+    
+   
+    #Insert the value of "Pop" which partitions the data among populations #only if more than one population
+    Loci <- insert.vals(Vec=Loci,breaks=PopPosition,newVal="Pop")
+    
+    #Add the first "Pop" label
+    Loci <- c("Pop",Loci) 
+    
+    insNames <- names(tempAgPop)
+    
+    insNames <- insNames[-which(insNames == "agPop")]
+    #insNames <- insNames[-which(insNames == "AgPop")]
+    
+    Output <- c(stacks.version, insNames, Loci)
+        
+      
+    } ### END of if agPop = TRUE statement
     
     
     
