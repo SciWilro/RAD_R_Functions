@@ -220,4 +220,4 @@ subset.GenePop <- function(GenePop,subs=NULL,keep=TRUE,dir,sPop=NULL, agPop=FALS
     # Save the file
     write.table(Output,dir,col.names=FALSE,row.names=FALSE,quote=FALSE)
 
-#} #End function
+} #End function
