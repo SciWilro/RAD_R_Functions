@@ -1,6 +1,8 @@
 AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
-                              OrderPops=NULL,standardize=TRUE,SNPlabs=FALSE,
-                              optimizer=TRUE,nopt=4,optdiff=0.3,plot=TRUE){
+                              OrderPops=NULL,standardize=TRUE,locilabel=FALSE,
+                              optimizer=TRUE,nopt=4,optdiff=0.3,snpOptimizer=TRUE,
+                              NorthPops=NULL,SouthPops=NULL,plot=TRUE){
+
   
   #Function details -------------
   
@@ -48,11 +50,37 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
   ## optdiff <- (default: 0.3) percentage difference between the top nopt and bottom nopt sample locations to be
   #            used by the optimizer
   
-  ## SNPlabs <-  logical vector (default: FALSE) specifying whether you want the SNP names 
+  ## snpOptimizer <- logical vector(default: TRUE) specifying whether plot loci should be ordered
+  #                   by the difference between NorthPops and SouthPops
   
-  ## plot <- is a logical vector (default: TRUE), 
+  ## NorthPops <- character vector of the populations of the northern category (must specify*)
+  ## SouthPops <- character vector of the populations of the southern category (must specify*)
+  #* will only be used if snpOptimizer is TRUE
+  
+  ## locilabel <- logical (default: FALSE) specifying whether output plot shoud have the loci names as an axis label
+
+  ## plot <- is a logical vector (default: TRUE)
   ## TRUE: return the ggplot plot object 
   ## FALSE: return the HeatMapData
+  
+  #Check to see if Genepop is a file path or dataframe
+  if(is.character(GenePop)){
+    GenePop <- read.table(GenePop,
+                          header = FALSE, sep = "\t",
+                          quote = "", stringsAsFactors = FALSE)
+  }
+  
+  ## check if loci names are read in as one large character vector (1 row)
+  header <- GenePop[1,]
+  if(length(gregexpr(',', header, fixed=F)[[1]])>1){
+    lociheader <- strsplit(header,",")
+    lociheader <- gsub(" ","",unlist(lociheader))
+    #remove the first column of loci names
+    GenePop <- as.vector(GenePop)
+    GenePop <- GenePop[-1,]
+    GenePop <- c(lociheader,GenePop)
+    GenePop <- data.frame(GenePop,stringsAsFactors = FALSE)
+  }
   
   
   #Libraries ----------
@@ -167,6 +195,9 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
       
       #function to rescale a vector range to span 0 and 1
       scale01 <- function(x){(x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T))}
+      
+      #Difference function
+      diff_fun=function(x){x[1]-x[2]}
 
 ##Process the data -------------
       
@@ -301,8 +332,6 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
         HeatMapData <- as.data.frame(HeatMapData%>%group_by(SNP)%>%mutate(FreqStand=scale01(Freq))%>%ungroup())
       }
       
-   
-      
       #Order populations by latitude if specified
       if(length(OrderPops)!=0){HeatMapData$Pop=factor(HeatMapData$Pop,levels=OrderPops)}
       
@@ -320,8 +349,10 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
       if(standardize & optimizer)
         {
         
-        northPop <- rev(OrderPops)[1:nopt]
-        southPop <- OrderPops[1:nopt]
+        northPop <-NorthPops
+        southPop <-SouthPops
+        #northPop <- rev(OrderPops)[1:nopt]
+        #southPop <- OrderPops[1:nopt]
         
         #Identify SNP which need to be inverted (avearge for the top 4 and bottom 4)
         northSNPS <- data.frame(HeatMapData%>%filter(Pop %in% northPop)%>%group_by(SNP)
@@ -331,20 +362,45 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
         
         #merge the avearge allele frequencies between top north and bottom south pops (n=3)
         selSNPS <- merge(northSNPS,southSNPS,by="SNP")
-        selSNPS$diff <- abs(selSNPS$Mean-selSNPS$MeanS) #difference between average allele frequency
+        selSNPS$diff <- abs(selSNPS$MeanS-selSNPS$Mean) #difference between average allele frequency
         
         invSNPS <- as.character(selSNPS[which(selSNPS$diff>optdiff & selSNPS$MeanS>selSNPS$Mean),"SNP"])
         
-        
-           #invert the standardized allele frequency
+        #invert the standardized allele frequency
            for(i in invSNPS)
              {
              HeatMapData[which(HeatMapData$SNP==i),"FreqStand"]=
              1-HeatMapData[which(HeatMapData$SNP==i),"FreqStand"]
              }
+      }
+      
+#snp Optimizer
+      if(snpOptimizer){
+        HeatMapData2 <- HeatMapData
+        HeatMapData2$Pop=as.character(HeatMapData2$Pop)
+        NorthSouth <- rep(NA,nrow(HeatMapData2))
+        NorthSouth[which(HeatMapData2$Pop%in%NorthPops)] <- "North"
+        NorthSouth[which(HeatMapData2$Pop%in%SouthPops)] <- "South"
+        HeatMapData2$NorthSouth <- NorthSouth
+        
+        SumSnp <- data.frame(HeatMapData2%>%group_by(NorthSouth,SNP)%>%
+                               summarise(mFreq=mean(FreqStand,na.rm=T))%>%
+                               ungroup())
+        
+        diff_fun=function(x){x[1]-x[2]} #function to find the difference
+        SumSnp2 <- data.frame(SumSnp%>%
+                                group_by(SNP)%>%
+                                summarise(diffsnp=diff_fun(mFreq))%>%
+                                ungroup(),stringsAsFactors=FALSE)
+        SumSnp2 <- SumSnp2[order(SumSnp2$diffsnp,decreasing = TRUE),]
+        
+        HeatMapData$SNP=factor(HeatMapData$SNP,levels=SumSnp2$SNP)
         }
+
       
 #Create the heatmap --------------
+      
+      HeatMapData$Pop=factor(HeatMapData$Pop,levels=rev(OrderPops))
       
       if(standardize){p1 <- ggplot(HeatMapData,aes(x=SNP,y=Pop,fill=FreqStand))} #0-1 scaled (TRUE)
       if(!standardize){p1 <- ggplot(HeatMapData,aes(x=Pop,y=SNP,fill=Freq))} # 0-1 scaled (FALSE)
@@ -352,15 +408,15 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
       p1 <- p1+geom_tile()+
         scale_y_discrete(expand = c(0,0))+scale_x_discrete(expand = c(0,0))+
         theme_bw()+
-        theme(legend.position="bottom",axis.text.x = element_text(angle = 45, hjust = 1))+
-        scale_fill_gradient(low=muted("red"),high="blue")
+        theme(legend.position="bottom")+
+        scale_fill_gradient(high="blue",low=muted("red"))
       
       if(standardize){p1 <- p1+labs(y="Population",x="SNP",fill="Standardized allele frequency")}
       if(!standardize){p1 <- p1+labs(y="Population",x="SNP",fill="Allele frequency")}
+      if(locilabel){p1 <- p1+theme(axis.text.x = element_text(angle = 45, hjust = 1))}
+      if(!locilabel){p1 <- p1+theme(axis.text.x = element_blank())}
 
-      if(SNPlabs){p1 <- p1+theme(axis.text.x = element_blank())}
-      
-#Return function output -----------
+     #Return function output -----------
       if(plot){return(p1)}
       if(!plot){return(HeatMapData)}
 
