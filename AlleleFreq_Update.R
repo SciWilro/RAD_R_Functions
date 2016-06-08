@@ -200,10 +200,33 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
       diff_fun=function(x){x[1]-x[2]}
 
 ##Process the data -------------
+      #Check to see if GenePop is a data.frame from the workspace and convert to data.table
+      if(is.data.frame(GenePop)){GenePop <- data.table::as.data.table(GenePop)}
+      
+      #Check to see if Genepop is a file path or dataframe
+      if(is.character(GenePop)){
+        GenePop <- data.table::fread(GenePop,
+                                     header = FALSE, sep = "\t",
+                                     stringsAsFactors = FALSE)
+      }
+      
+      ## check if loci names are read in as one large character vector (1 row)
+      header <- GenePop[1,]
+      if(length(gregexpr(',', header, fixed=F)[[1]])>1){
+        lociheader <- strsplit(header,",")
+        lociheader <- gsub(" ","",unlist(lociheader))
+        #remove the first column of loci names
+        GenePop <- as.vector(GenePop)
+        GenePop <- GenePop[-1,]
+        GenePop <- c(lociheader,GenePop)
+        GenePop <- data.table::as.data.table(GenePop,stringsAsFactors = FALSE)
+      }
       
       ## Stacks version information
-          stacks.version <- GenePop[1,] # this could be blank or any other source. First row is ignored by GenePop
+      stacks.version <- GenePop[1,] # this could be blank or any other source. First row is ignored by GenePop
       
+      ##conver to data.frame
+      GenePop <- data.frame(GenePop)
       #Remove first label of the stacks version
           GenePop <- as.vector(GenePop)
           GenePop <- GenePop[-1,]
