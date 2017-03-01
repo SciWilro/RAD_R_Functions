@@ -432,7 +432,7 @@ AlleleFreqHeatMap <- function(GenePop,subs=NULL,keep=TRUE,POP="CHAR",refPop,
         scale_y_discrete(expand = c(0,0))+scale_x_discrete(expand = c(0,0))+
         theme_bw()+
         theme(legend.position="bottom")+
-        scale_fill_gradient(high="dodgerblue3",low="red3")
+        scale_fill_gradient(high="#2892C7",low="#E81014")
       
       if(standardize){p1 <- p1+labs(y="Population",x="SNP",fill="Standardized allele frequency")}
       if(!standardize){p1 <- p1+labs(y="Population",x="SNP",fill="Allele frequency")}
